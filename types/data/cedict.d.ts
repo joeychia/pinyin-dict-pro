@@ -1,4 +1,1 @@
-export declare const CEDICT_DATA: Record<string, {
-    p: string;
-    e: string[];
-}>;
+export declare const CEDICT_DATA: Record<string, string>;

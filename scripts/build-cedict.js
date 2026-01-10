@@ -82,10 +82,8 @@ function parseFile() {
             const pinyinSym = convertPinyin(pinyinNum);
             
             if (!data[simplified]) {
-                data[simplified] = {
-                    p: pinyinSym,
-                    e: defs
-                };
+                // Store as string to save memory: pinyin + \u0001 + def1 + \u0001 + def2...
+                data[simplified] = [pinyinSym, ...defs].join('\u0001');
                 count++;
             } else {
                 // If exists, maybe multiple pronunciations.
@@ -100,7 +98,7 @@ function parseFile() {
     
     console.log(`Parsed ${count} entries.`);
     
-    const outputContent = `export const CEDICT_DATA: Record<string, { p: string, e: string[] }> = ${JSON.stringify(data, null, 2)};`;
+    const outputContent = `export const CEDICT_DATA: Record<string, string> = ${JSON.stringify(data)};`;
     
     fs.writeFileSync(outputFile, outputContent);
     console.log(`Written to ${outputFile}`);
