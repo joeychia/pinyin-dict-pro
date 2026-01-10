@@ -10,6 +10,7 @@ import {
 } from '../../data/cedict';
 import { segment, OutputFormat } from '../segment';
 import { pinyin, BasicOptions } from '../pinyin';
+import { getPinyinWithoutTone, getPinyinWithNum } from '../pinyin/handle';
 
 let inited = false;
 let pinyinIndices: Uint16Array;
@@ -139,11 +140,18 @@ export function pinyinEn(text: string, options?: BasicOptions): EnglishResult[] 
           const end = defOffsets[longestMatchValueIdx + 1];
           const defStr = CEDICT_DEFINITIONS.substring(start, end);
           const en = defStr.split('\u0001');
-          const pinyinStr = CEDICT_PINYINS[pinyinIndices[longestMatchValueIdx]];
+          let pinyinStr = CEDICT_PINYINS[pinyinIndices[longestMatchValueIdx]];
           
+          // Handle toneType option
+          if (options?.toneType === 'none') {
+              pinyinStr = getPinyinWithoutTone(pinyinStr);
+          } else if (options?.toneType === 'num') {
+              pinyinStr = getPinyinWithNum(pinyinStr, pinyinStr);
+          }
+
           results.push({
               zh,
-              pinyin: pinyinStr, // Use stored pinyin directly
+              pinyin: pinyinStr,
               en
           });
           
