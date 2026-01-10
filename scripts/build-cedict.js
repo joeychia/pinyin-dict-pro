@@ -64,14 +64,20 @@ function parseFile() {
     const content = fs.readFileSync(inputFile, 'utf-8');
     const lines = content.split('\n');
     
-    const data = {};
+    // Arrays for Structure of Arrays (SoA) layout
+    const keys = [];
+    const values = []; // definitions
+    const pinyins = [];
+
+    // Temporary map to deduplicate keys (keep first entry)
+    // We sort keys at the end.
+    const tempMap = new Map();
     
     let count = 0;
     for (const line of lines) {
         if (line.startsWith('#') || line.startsWith('%') || line.trim() === '') continue;
         
         // Format: Traditional Simplified [pinyin] /def1/def2/
-        // Relaxed regex to handle potential trailing spaces
         const match = line.match(/^(\S+)\s+(\S+)\s+\[(.*?)\]\s+\/(.*)\//);
         if (match) {
             const simplified = match[2];
@@ -81,24 +87,37 @@ function parseFile() {
             // Only convert valid pinyin
             const pinyinSym = convertPinyin(pinyinNum);
             
-            if (!data[simplified]) {
-                // Store as string to save memory: pinyin + \u0001 + def1 + \u0001 + def2...
-                data[simplified] = [pinyinSym, ...defs].join('\u0001');
+            if (!tempMap.has(simplified)) {
+                tempMap.set(simplified, {
+                    p: pinyinSym,
+                    d: defs.join('\u0001')
+                });
                 count++;
-            } else {
-                // If exists, maybe multiple pronunciations.
-                // For simplicity, we keep the first one or merge?
-                // If we want to support polyphones correctly, we need context.
-                // But here we are just building a lookup map.
-                // Let's just keep the first one for now as per "digest" request simplicity.
-                // Or better, store array.
             }
         }
     }
     
-    console.log(`Parsed ${count} entries.`);
+    // Convert to sorted arrays
+    const sortedKeys = Array.from(tempMap.keys()).sort();
+    for (const key of sortedKeys) {
+        keys.push(key);
+        const entry = tempMap.get(key);
+        pinyins.push(entry.p);
+        values.push(entry.d);
+    }
     
-    const outputContent = `export const CEDICT_DATA: Record<string, string> = ${JSON.stringify(data)};`;
+    console.log(`Parsed ${count} entries.`);
+    console.log(`Unique Keys: ${keys.length}`);
+
+    // Deduplicate Pinyins?
+    const uniquePinyins = new Set(pinyins);
+    console.log(`Unique Pinyins: ${uniquePinyins.size}`);
+    
+    const outputContent = `
+export const CEDICT_KEYS = ${JSON.stringify(keys)};
+export const CEDICT_VALUES = ${JSON.stringify(values)};
+export const CEDICT_PINYINS = ${JSON.stringify(pinyins)};
+`;
     
     fs.writeFileSync(outputFile, outputContent);
     console.log(`Written to ${outputFile}`);

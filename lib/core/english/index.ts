@@ -1,4 +1,4 @@
-import { CEDICT_DATA } from '../../data/cedict';
+import { CEDICT_KEYS, CEDICT_VALUES, CEDICT_PINYINS } from '../../data/cedict';
 import { addDict } from '../dict';
 import { segment, OutputFormat } from '../segment';
 import { pinyin, BasicOptions } from '../pinyin';
@@ -11,21 +11,32 @@ export interface EnglishResult {
   en: string[];
 }
 
+function binarySearch(keys: string[], target: string): number {
+    let left = 0;
+    let right = keys.length - 1;
+    
+    while (left <= right) {
+        const mid = (left + right) >>> 1;
+        const midVal = keys[mid];
+        
+        if (midVal < target) {
+            left = mid + 1;
+        } else if (midVal > target) {
+            right = mid - 1;
+        } else {
+            return mid;
+        }
+    }
+    return -1;
+}
+
 export function initEnglish() {
   if (inited) return;
-  // Convert CEDICT_DATA to the format expected by addDict
-  // addDict expects { [word]: pinyin }
-  // CEDICT_DATA is { [word]: { p: pinyin, e: definitions } }
   
   const dict: Record<string, string> = {};
-  for (const key in CEDICT_DATA) {
-      // Use the pinyin from CEDICT
-      // CEDICT_DATA is { [word]: "pinyin\u0001def1\u0001def2..." }
-      const val = CEDICT_DATA[key];
-      const separatorIndex = val.indexOf('\u0001');
-      if (separatorIndex !== -1) {
-          dict[key] = val.substring(0, separatorIndex);
-      }
+  const len = CEDICT_KEYS.length;
+  for (let i = 0; i < len; i++) {
+      dict[CEDICT_KEYS[i]] = CEDICT_PINYINS[i];
   }
   
   // Add to the segmentation dictionary
@@ -45,10 +56,10 @@ export function pinyinEn(text: string, options?: BasicOptions): EnglishResult[] 
   
   // Map segments to results
   return segments.map(seg => {
-    const entry = CEDICT_DATA[seg];
+    const index = binarySearch(CEDICT_KEYS, seg);
     let en: string[] = [];
-    if (entry) {
-        en = entry.split('\u0001').slice(1);
+    if (index !== -1) {
+        en = CEDICT_VALUES[index].split('\u0001');
     }
     
     return {

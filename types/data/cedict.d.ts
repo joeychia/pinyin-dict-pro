@@ -1,1 +1,3 @@
-export declare const CEDICT_DATA: Record<string, string>;
+export declare const CEDICT_KEYS: string[];
+export declare const CEDICT_VALUES: string[];
+export declare const CEDICT_PINYINS: string[];
