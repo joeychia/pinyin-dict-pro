@@ -1,5 +1,11 @@
 # 更新日志
 
+## 3.28.0
+
+- 【feat】新增 `pinyinEn` API，支持中文转英文功能
+- 【feat】集成 CC-CEDICT 词典
+- 【note】由于集成了英文词典，包体积增加至约 9.6MB，内存占用增加至约 200MB (运行时)
+
 ## 3.25.0
 
 - 【feat】`match` API 新增 `v` 选项，允许使用 `v` 匹配 `ü` 的拼音 [#276](https://github.com/zh-lx/pinyin-pro/pull/276)
