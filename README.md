@@ -27,18 +27,48 @@
 - 支持拼音输入转换
 - 极致的性能和极高的拼音识别准确率
 
+### 🚀 Fork 新特性
+
+本 Fork 版本 (`@joeychia/pinyin-dict-pro`) 集成了 CEDICT 词典，新增了汉英翻译功能，并进行了极致的内存优化。
+
+- **汉英翻译 (`pinyinEn`)**: 支持将中文文本转换为对应的拼音和英文释义。
+- **极致内存优化**: 采用 Packed Static Trie (压缩静态字典树) 数据结构，内存占用极低 (仅约 50MB)，同时保持极高的查询速度。
+- **支持音调格式**: 支持 `toneType` 选项，可输出带音调、无音调或数字音调的拼音。
+
+#### 使用示例
+
+```js
+import { pinyinEn } from "@joeychia/pinyin-dict-pro";
+
+// 获取中文对应的英文释义
+const result = pinyinEn("你好");
+/*
+[
+  {
+    zh: "你好",
+    pinyin: "nǐ hǎo",
+    en: ["Hello!", "Hi!", "How are you?"]
+  }
+]
+*/
+
+// 支持音调选项
+pinyinEn("你好", { toneType: "num" }); // pinyin: "ni3 hao3"
+pinyinEn("你好", { toneType: "none" }); // pinyin: "ni hao"
+```
+
 ### 🔨 安装
 
 npm 安装
 
 ```html
-npm install pinyin-pro
+npm install @joeychia/pinyin-dict-pro
 ```
 
 浏览器引入
 
 ```html
-<script src="https://unpkg.com/pinyin-pro"></script>
+<script src="https://unpkg.com/@joeychia/pinyin-dict-pro"></script>
 ```
 
 ### 💡 使用示例
@@ -48,7 +78,7 @@ npm install pinyin-pro
 - 获取拼音，更多功能请查看[pinyin API](https://pinyin-pro.cn/use/pinyin.html)
 
   ```js
-  import { pinyin } from "pinyin-pro";
+  import { pinyin } from "@joeychia/pinyin-dict-pro";
 
   // 获取字符串格式拼音
   pinyin("汉语拼音"); // 'hàn yǔ pīn yīn'
@@ -72,7 +102,7 @@ npm install pinyin-pro
 - 文本和拼音匹配，更多匹配规则请查看[match API](https://pinyin-pro.cn/use/match.html)
 
   ```js
-  import { match } from "pinyin-pro";
+  import { match } from "@joeychia/pinyin-dict-pro";
 
   // 支持首字母匹配
   match("中文拼音", "zwp"); // [0, 1, 2]
@@ -87,7 +117,7 @@ npm install pinyin-pro
 - 拼音格式转换，更多功能请查看[convert API](https://pinyin-pro.cn/use/convert.html)
 
   ```js
-  import { convert } from "pinyin-pro";
+  import { convert } from "@joeychia/pinyin-dict-pro";
 
   // 数组转符号
   convert("pin1 yin1"); // 'pīn yīn'
@@ -102,7 +132,7 @@ npm install pinyin-pro
 - 获取带汉字拼音的 HTML 字符串，更多配置请查看[html API](https://pinyin-pro.cn/use/html.html)
 
   ```js
-  import { html } from "pinyin-pro";
+  import { html } from "@joeychia/pinyin-dict-pro";
 
   // 带拼音汉字的 HTML 字符串
   html("汉语拼音");
@@ -183,6 +213,7 @@ npm install pinyin-pro
         <td>100w字转换耗时</td>
         <td>⛔ 内存溢出转换失败</td>
         <td>🚀 638.888ms</td>
+        <td>🚀 820.131ms</td>
         <td>🚀 820.131ms</td>
     </tr>
     <tr>
