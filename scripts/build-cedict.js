@@ -109,14 +109,53 @@ function parseFile() {
     console.log(`Parsed ${count} entries.`);
     console.log(`Unique Keys: ${keys.length}`);
 
-    // Deduplicate Pinyins?
-    const uniquePinyins = new Set(pinyins);
-    console.log(`Unique Pinyins: ${uniquePinyins.size}`);
-    
+    // 1. Process Pinyins (Deduplicate and Indices)
+    const uniquePinyins = Array.from(new Set(pinyins));
+    const pinyinMap = new Map();
+    uniquePinyins.forEach((p, i) => pinyinMap.set(p, i));
+
+    const pinyinIndices = new Uint16Array(keys.length);
+    for (let i = 0; i < keys.length; i++) {
+        pinyinIndices[i] = pinyinMap.get(pinyins[i]);
+    }
+
+    // 2. Process Definitions (Concatenate and Lengths)
+    let definitionsStr = "";
+    const defLengths = new Uint16Array(keys.length);
+    for (let i = 0; i < keys.length; i++) {
+        const def = values[i];
+        defLengths[i] = def.length;
+        definitionsStr += def;
+    }
+
+    // 3. Process Keys (Concatenate and Lengths)
+    let keysStr = "";
+    const keyLengths = new Uint8Array(keys.length);
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        if (key.length > 255) {
+             console.warn(`Warning: Key too long for Uint8: ${key.length}`);
+        }
+        keyLengths[i] = key.length;
+        keysStr += key;
+    }
+
+    console.log(`Unique Pinyins: ${uniquePinyins.length}`);
+    console.log(`Definitions Length: ${definitionsStr.length}`);
+    console.log(`Keys Length: ${keysStr.length}`);
+
+    // Helper to encode Buffer to Base64
+    const pinyinBase64 = Buffer.from(pinyinIndices.buffer).toString('base64');
+    const defLengthsBase64 = Buffer.from(defLengths.buffer).toString('base64');
+    const keyLengthsBase64 = Buffer.from(keyLengths.buffer).toString('base64');
+
     const outputContent = `
-export const CEDICT_KEYS = ${JSON.stringify(keys)};
-export const CEDICT_VALUES = ${JSON.stringify(values)};
-export const CEDICT_PINYINS = ${JSON.stringify(pinyins)};
+export const CEDICT_PINYINS = ${JSON.stringify(uniquePinyins)};
+export const CEDICT_PINYIN_INDICES = "${pinyinBase64}";
+export const CEDICT_DEF_LENGTHS = "${defLengthsBase64}";
+export const CEDICT_DEFINITIONS = ${JSON.stringify(definitionsStr)};
+export const CEDICT_KEY_LENGTHS = "${keyLengthsBase64}";
+export const CEDICT_KEYS = ${JSON.stringify(keysStr)};
 `;
     
     fs.writeFileSync(outputFile, outputContent);

@@ -65,6 +65,50 @@ export function addDict(dict: DICT | {}, options?: string | DictOptions) {
   acTree.build(patterns);
 }
 
+export function addPattern(
+  word: string,
+  pinyin: string,
+  dictName: string | symbol = DefaultName
+) {
+  const wordLength = stringLength(word);
+  if (wordLength === 1) {
+    addToOriginDict(dictName, word, pinyin, "add");
+  }
+  acTree.build([
+    {
+      zh: word,
+      pinyin,
+      probability: Probability.DICT * wordLength * wordLength,
+      length: wordLength,
+      priority: Priority.Normal,
+      dict: dictName,
+    },
+  ]);
+}
+
+export function addPatterns(
+  patterns: { zh: string; pinyin: string }[],
+  dictName: string | symbol = DefaultName
+) {
+  const list: Pattern[] = [];
+  for (let i = 0; i < patterns.length; i++) {
+    const { zh, pinyin } = patterns[i];
+    const wordLength = stringLength(zh);
+    if (wordLength === 1) {
+      addToOriginDict(dictName, zh, pinyin, "add");
+    }
+    list.push({
+      zh,
+      pinyin,
+      probability: Probability.DICT * wordLength * wordLength,
+      length: wordLength,
+      priority: Priority.Normal,
+      dict: dictName,
+    });
+  }
+  acTree.build(list);
+}
+
 export function removeDict(dictName?: string) {
   acTree.removeDict(dictName || DefaultName);
   removeOriginDict(dictName || DefaultName);

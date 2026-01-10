@@ -4,7 +4,7 @@
 
 - 【feat】新增 `pinyinEn` API，支持中文转英文功能
 - 【feat】集成 CC-CEDICT 词典
-- 【note】由于集成了英文词典，包体积增加至约 8.5MB，内存占用增加至约 159MB (运行时)
+- 【note】由于集成了英文词典，包体积增加至约 8.4MB，内存占用增加至约 159MB (运行时)
 - 【benchmark】English dictionary coverage: 99.92%
 - 【benchmark】Speed comparison: `pinyinEn` is ~4% slower than `pinyin` (without initialization)
 
