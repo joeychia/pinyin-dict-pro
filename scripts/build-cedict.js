@@ -128,34 +128,142 @@ function parseFile() {
         definitionsStr += def;
     }
 
-    // 3. Process Keys (Concatenate and Lengths)
-    let keysStr = "";
-    const keyLengths = new Uint8Array(keys.length);
+    // 3. Process Keys into Packed Static Trie
+    // Node structure: 
+    // - char (Uint16)
+    // - valueIndex (Uint32, 0 means no value, index+1 to avoid 0)
+    // - childIndex (Uint32, index into the node array where children start)
+    // - childCount (Uint16)
+    
+    // First, build Object Trie
+    const root = { children: new Map(), valueIndex: -1 };
+    let totalNodes = 1; // Root
+    
     for (let i = 0; i < keys.length; i++) {
         const key = keys[i];
-        if (key.length > 255) {
-             console.warn(`Warning: Key too long for Uint8: ${key.length}`);
+        let node = root;
+        for (let j = 0; j < key.length; j++) {
+            const char = key[j];
+            if (!node.children.has(char)) {
+                node.children.set(char, { children: new Map(), valueIndex: -1 });
+                totalNodes++;
+            }
+            node = node.children.get(char);
         }
-        keyLengths[i] = key.length;
-        keysStr += key;
+        node.valueIndex = i; // Store index to values array
+    }
+    
+    console.log(`Total Trie Nodes: ${totalNodes}`);
+    
+    // Flatten to Arrays (BFS/DFS doesn't matter much, but BFS keeps children close?)
+    // Actually, to implement "Sorted Array Trie", children of a node MUST be contiguous.
+    // So we need to serialize in a specific order.
+    // Order: Root, then Root's children, then their children...
+    // Actually, standard way:
+    // array[0] = root.
+    // Root's children are at array[root.childIndex]...array[root.childIndex + root.childCount - 1].
+    
+    const nodeChars = new Uint16Array(totalNodes);
+    const nodeValueIndices = new Uint32Array(totalNodes);
+    const nodeChildIndices = new Uint32Array(totalNodes);
+    const nodeChildCounts = new Uint16Array(totalNodes);
+    
+    let nextFreeIndex = 1; // 0 is root
+    const queue = [{ node: root, index: 0, char: 0 }]; // char 0 for root (dummy)
+    
+    // We need to process the queue but strictly allocating children blocks
+    // So, standard BFS:
+    // Pop node U.
+    // Allocate space for U's children (Say, K children).
+    // U.childIndex = nextFreeIndex.
+    // U.childCount = K.
+    // Place children at nextFreeIndex ... nextFreeIndex + K - 1.
+    // Add children to queue.
+    // Increment nextFreeIndex by K.
+    
+    // Wait, the 'queue' approach above needs modification.
+    // We can't just push to queue and process later because we need to write to the arrays *now* to set parent's pointers.
+    // Actually, we can just process the array linearly?
+    // No, we need to traverse.
+    
+    // Let's use a pointer 'currentProcessIndex' starting at 0.
+    // We write Root at 0.
+    // While currentProcessIndex < nextFreeIndex:
+    //   Get node object associated with index 'currentProcessIndex'
+    //   Sort children by char code.
+    //   Write children to 'nextFreeIndex'.
+    //   Update 'nodeChildIndices[currentProcessIndex]' = nextFreeIndex
+    //   Update 'nodeChildCounts[currentProcessIndex]' = children.length
+    //   Map children objects to their new indices for future processing.
+    //   nextFreeIndex += children.length.
+    //   currentProcessIndex++.
+    
+    // We need to map Index -> NodeObject.
+    const indexToNode = new Map();
+    indexToNode.set(0, root);
+    
+    // Initialize Root
+    nodeChars[0] = 0;
+    nodeValueIndices[0] = 0; // Root has no value
+    
+    let currentProcessIndex = 0;
+    
+    while (currentProcessIndex < nextFreeIndex) {
+        const node = indexToNode.get(currentProcessIndex);
+        // Clean up map to save memory
+        indexToNode.delete(currentProcessIndex);
+        
+        if (node.children.size > 0) {
+            // Sort children
+            const sortedChars = Array.from(node.children.keys()).sort();
+            
+            const startIdx = nextFreeIndex;
+            nodeChildIndices[currentProcessIndex] = startIdx;
+            nodeChildCounts[currentProcessIndex] = sortedChars.length;
+            
+            for (let i = 0; i < sortedChars.length; i++) {
+                const char = sortedChars[i];
+                const childNode = node.children.get(char);
+                const childIdx = startIdx + i;
+                
+                nodeChars[childIdx] = char.charCodeAt(0);
+                // Value Index: 0 means None. So we store actual_index + 1.
+                // If valueIndex is -1 (no value), we store 0.
+                nodeValueIndices[childIdx] = childNode.valueIndex === -1 ? 0 : childNode.valueIndex + 1;
+                
+                indexToNode.set(childIdx, childNode);
+            }
+            
+            nextFreeIndex += sortedChars.length;
+        }
+        
+        currentProcessIndex++;
     }
 
     console.log(`Unique Pinyins: ${uniquePinyins.length}`);
     console.log(`Definitions Length: ${definitionsStr.length}`);
-    console.log(`Keys Length: ${keysStr.length}`);
 
     // Helper to encode Buffer to Base64
     const pinyinBase64 = Buffer.from(pinyinIndices.buffer).toString('base64');
     const defLengthsBase64 = Buffer.from(defLengths.buffer).toString('base64');
-    const keyLengthsBase64 = Buffer.from(keyLengths.buffer).toString('base64');
+    
+    // Trie Arrays
+    const nodeCharsBase64 = Buffer.from(nodeChars.buffer).toString('base64');
+    const nodeValueIndicesBase64 = Buffer.from(nodeValueIndices.buffer).toString('base64');
+    const nodeChildIndicesBase64 = Buffer.from(nodeChildIndices.buffer).toString('base64');
+    const nodeChildCountsBase64 = Buffer.from(nodeChildCounts.buffer).toString('base64');
 
     const outputContent = `
 export const CEDICT_PINYINS = ${JSON.stringify(uniquePinyins)};
 export const CEDICT_PINYIN_INDICES = "${pinyinBase64}";
 export const CEDICT_DEF_LENGTHS = "${defLengthsBase64}";
 export const CEDICT_DEFINITIONS = ${JSON.stringify(definitionsStr)};
-export const CEDICT_KEY_LENGTHS = "${keyLengthsBase64}";
-export const CEDICT_KEYS = ${JSON.stringify(keysStr)};
+
+// Trie Data
+export const CEDICT_TRIE_CHARS = "${nodeCharsBase64}";
+export const CEDICT_TRIE_VALUES = "${nodeValueIndicesBase64}";
+export const CEDICT_TRIE_CHILD_INDICES = "${nodeChildIndicesBase64}";
+export const CEDICT_TRIE_CHILD_COUNTS = "${nodeChildCountsBase64}";
 `;
     
     fs.writeFileSync(outputFile, outputContent);
