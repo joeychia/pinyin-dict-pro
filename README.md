@@ -39,10 +39,37 @@ pinyinEn("你好", { toneType: "num" });  // "ni3 hao3"
 ```
 
 Notes:
-- If a character/word is not present in CEDICT, the result returns `{ zh: <char>, pinyin: '', en: [] }`.
+- If a character/word is not present in CEDICT, the result returns `{ zh: <char>, pinyin: <char>, en: [] }`.
 - Tone formatting applies to pinyin from CEDICT entries only.
 
-### 📦 Data Source
+### ⚙️ Tokenization Mode
+
+- Default: tokenized output (array of segments).
+- To return a single token for the entire input, set `tokenized: false`:
+
+```js
+// Single token result with pinyin for entire text
+const single = pinyinEn("你好, H!", { tokenized: false });
+/*
+[
+  { zh: "你好, H!", pinyin: "nǐ hǎo ,  H !", en: [] }
+]
+*/
+```
+
+### 🔎 Segmentation
+
+- Algorithm: Forward Maximum Matching (FMM) over a Packed Static Trie built from CC-CEDICT entries.
+- Process:
+  - For each position i in the text, traverse the Trie using character codes and binary search among children to find the longest dictionary match.
+  - If a longest match exists, emit one segment `{ zh, pinyin, en }` for that word.
+  - If no match exists at i, emit a single-character segment with `{ zh: char, pinyin: char, en: [] }`.
+- Scope:
+  - Only CEDICT entries are treated as multi-character words.
+  - Non-dictionary content (Latin letters, digits, punctuation) is segmented per character.
+- No dependency on external segmentation libraries or AC automata; segmentation is fully self-contained.
+
+### �📦 Data Source
 
 - Based on [CC-CEDICT](https://cc-cedict.org/) (compressed and packed into TypedArrays).
 
