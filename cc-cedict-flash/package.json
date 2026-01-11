@@ -1,0 +1,38 @@
+{
+  "name": "cc-cedict-flash",
+  "version": "0.1.0",
+  "description": "CC-CEDICT based Chinese→English lookup with pinyin output and Trie-based segmentation.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:dict": "node scripts/fetch-and-build.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "cc-cedict",
+    "cedict",
+    "pinyin",
+    "dictionary",
+    "chinese",
+    "english",
+    "segmentation",
+    "trie"
+  ],
+  "author": "joeychia",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joeychia/cc-cedict-flash.git"
+  },
+  "bugs": {
+    "url": "https://github.com/joeychia/cc-cedict-flash/issues"
+  },
+  "homepage": "https://github.com/joeychia/cc-cedict-flash",
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

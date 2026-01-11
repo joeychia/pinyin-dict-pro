@@ -27,7 +27,6 @@ export interface EnglishResult {
 
 export interface PinyinEnOptions {
   toneType?: 'symbol' | 'none' | 'num';
-  tokenized?: boolean;
 }
 
 function base64ToUint16Array(base64: string): Uint16Array {
@@ -154,7 +153,6 @@ export function pinyinEn(text: string, options?: PinyinEnOptions): EnglishResult
   initEnglish();
   
   const results: EnglishResult[] = [];
-  const tokens: EnglishResult[] = [];
   let i = 0;
   
   while (i < text.length) {
@@ -195,13 +193,8 @@ export function pinyinEn(text: string, options?: PinyinEnOptions): EnglishResult
           } else if (options?.toneType === 'num') {
               pinyinStr = toneSymbolToNum(pinyinStr);
           }
-          
+
           results.push({
-              zh,
-              pinyin: pinyinStr,
-              en
-          });
-          tokens.push({
               zh,
               pinyin: pinyinStr,
               en
@@ -216,23 +209,8 @@ export function pinyinEn(text: string, options?: PinyinEnOptions): EnglishResult
               pinyin: char,
               en: []
           });
-          tokens.push({
-              zh: char,
-              pinyin: char,
-              en: []
-          });
           i++;
       }
-  }
-  
-  if (options?.tokenized === false) {
-      const pinyinAll = tokens.map(t => t.pinyin).join(' ');
-      const enAll = tokens.length === 1 && tokens[0].zh.length === text.length && tokens[0].en.length > 0 ? tokens[0].en : [];
-      return [{
-          zh: text,
-          pinyin: pinyinAll,
-          en: enAll
-      }];
   }
   
   return results;

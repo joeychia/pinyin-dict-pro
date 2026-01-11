@@ -5,6 +5,7 @@ export interface EnglishResult {
 }
 export interface PinyinEnOptions {
     toneType?: 'symbol' | 'none' | 'num';
+    tokenized?: boolean;
 }
 export declare function initEnglish(): void;
 export declare function pinyinEn(text: string, options?: PinyinEnOptions): EnglishResult[];
