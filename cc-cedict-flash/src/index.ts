@@ -161,4 +161,13 @@ export function createCedictFlash(data: CedictData) {
   return { pinyinEn }
 }
 
+import { builtinCedictData } from './data-adapter.js'
+let defaultApi: { pinyinEn: (text: string, options?: PinyinEnOptions) => EnglishResult[] } | undefined
+export function pinyinEn(text: string, options?: PinyinEnOptions): EnglishResult[] {
+  if (!defaultApi) {
+    defaultApi = createCedictFlash(builtinCedictData())
+  }
+  return defaultApi.pinyinEn(text, options)
+}
+
 export { builtinCedictData } from './data-adapter.js'

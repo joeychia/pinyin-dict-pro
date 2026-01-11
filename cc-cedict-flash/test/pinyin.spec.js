@@ -1,8 +1,7 @@
 import assert from 'node:assert'
-import { createCedictFlash } from '../dist/cc-cedict-flash/src/index.js'
-import { builtinCedictData } from '../dist/cc-cedict-flash/src/data-adapter.js'
+import { pinyinEn } from '../dist/cc-cedict-flash/src/index.js'
 
-const api = createCedictFlash(builtinCedictData())
+const api = { pinyinEn }
 
 function expectToneNone(zh, expected) {
   const res = api.pinyinEn(zh, { toneType: 'none' })

@@ -1,12 +1,11 @@
 import assert from 'node:assert'
-import { createCedictFlash } from '../dist/cc-cedict-flash/src/index.js'
-import { builtinCedictData } from '../dist/cc-cedict-flash/src/data-adapter.js'
+import { pinyinEn } from '../dist/cc-cedict-flash/src/index.js'
 
 function stringifyTokens(tokens) {
   return tokens.map(t => `${t.zh}|${t.pinyin}|${t.en.join(';')}`).join(' || ')
 }
 
-const api = createCedictFlash(builtinCedictData())
+const api = { pinyinEn }
 
 {
   const res = api.pinyinEn('你好')
