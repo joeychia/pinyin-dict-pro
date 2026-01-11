@@ -1,7 +1,7 @@
 {
   "name": "@joeychia/pinyin-dict-pro",
   "version": "3.28.0",
-  "description": "准确率和性能最优异的汉字转拼音库。获取中文拼音、韵母、声母、声调、首字母，支持拼音匹配",
+  "description": "CC-CEDICT based Chinese→English lookup with pinyin output and tone formatting; memory-efficient Packed Static Trie.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "typings": "./types/index.d.ts",
@@ -32,12 +32,12 @@
     "声母",
     "音调"
   ],
-  "author": "zh-lx",
+  "author": "joeychia",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/zh-lx/pinyin-pro/issues"
+    "url": "https://github.com/joeychia/pinyin-dict-pro/issues"
   },
-  "homepage": "https://pinyin-pro.cn",
+  "homepage": "https://github.com/joeychia/pinyin-dict-pro",
   "exports": {
     ".": {
       "import": {

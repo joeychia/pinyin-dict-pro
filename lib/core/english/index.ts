@@ -8,9 +8,6 @@ import {
   CEDICT_TRIE_CHILD_INDICES,
   CEDICT_TRIE_CHILD_COUNTS
 } from '../../data/cedict';
-import { segment, OutputFormat } from '../segment';
-import { pinyin, BasicOptions } from '../pinyin';
-import { getPinyinWithoutTone, getPinyinWithNum } from '../pinyin/handle';
 
 let inited = false;
 let pinyinIndices: Uint16Array;
@@ -26,6 +23,10 @@ export interface EnglishResult {
   zh: string;
   pinyin: string;
   en: string[];
+}
+
+export interface PinyinEnOptions {
+  toneType?: 'symbol' | 'none' | 'num';
 }
 
 function base64ToUint16Array(base64: string): Uint16Array {
@@ -101,7 +102,51 @@ function findChild(nodeIdx: number, charCode: number): number {
     return -1;
 }
 
-export function pinyinEn(text: string, options?: BasicOptions): EnglishResult[] {
+function removeToneMarks(input: string): string {
+  const map: Record<string, string> = {
+    'ā':'a','á':'a','ǎ':'a','à':'a',
+    'ē':'e','é':'e','ě':'e','è':'e',
+    'ī':'i','í':'i','ǐ':'i','ì':'i',
+    'ō':'o','ó':'o','ǒ':'o','ò':'o',
+    'ū':'u','ú':'u','ǔ':'u','ù':'u',
+    'ǖ':'u','ǘ':'u','ǚ':'u','ǜ':'u',
+    'ü':'u'
+  };
+  let out = '';
+  for (const ch of input) {
+    out += map[ch] ?? ch;
+  }
+  return out;
+}
+
+function toneSymbolToNumToken(token: string): string {
+  const toneMap: Record<string, [string, string]> = {
+    'ā':['a','1'],'á':['a','2'],'ǎ':['a','3'],'à':['a','4'],
+    'ē':['e','1'],'é':['e','2'],'ě':['e','3'],'è':['e','4'],
+    'ī':['i','1'],'í':['i','2'],'ǐ':['i','3'],'ì':['i','4'],
+    'ō':['o','1'],'ó':['o','2'],'ǒ':['o','3'],'ò':['o','4'],
+    'ū':['u','1'],'ú':['u','2'],'ǔ':['u','3'],'ù':['u','4'],
+    'ǖ':['u','1'],'ǘ':['u','2'],'ǚ':['u','3'],'ǜ':['u','4'],
+    'ü':['u','']
+  };
+  let tone = '';
+  let out = '';
+  for (const ch of token) {
+    if (toneMap[ch]) {
+      out += toneMap[ch][0];
+      tone = toneMap[ch][1];
+    } else {
+      out += ch;
+    }
+  }
+  return tone ? `${out}${tone}` : out;
+}
+
+function toneSymbolToNum(input: string): string {
+  return input.split(/\s+/).map(toneSymbolToNumToken).join(' ');
+}
+
+export function pinyinEn(text: string, options?: PinyinEnOptions): EnglishResult[] {
   if (!text) return [];
 
   // Ensure dictionary is loaded
@@ -144,9 +189,9 @@ export function pinyinEn(text: string, options?: BasicOptions): EnglishResult[] 
           
           // Handle toneType option
           if (options?.toneType === 'none') {
-              pinyinStr = getPinyinWithoutTone(pinyinStr);
+              pinyinStr = removeToneMarks(pinyinStr);
           } else if (options?.toneType === 'num') {
-              pinyinStr = getPinyinWithNum(pinyinStr, pinyinStr);
+              pinyinStr = toneSymbolToNum(pinyinStr);
           }
 
           results.push({
@@ -157,12 +202,11 @@ export function pinyinEn(text: string, options?: BasicOptions): EnglishResult[] 
           
           i += longestMatchLen;
       } else {
-          // No match, process single char using pinyin-pro's standard logic (if needed)
-          // Or just output it with empty en
+          // No match in CEDICT, output single char with original as pinyin, empty en
           const char = text[i];
           results.push({
               zh: char,
-              pinyin: pinyin(char, { ...options, type: 'string', separator: ' ' }),
+              pinyin: char,
               en: []
           });
           i++;
