@@ -9,22 +9,18 @@ npm install cc-cedict-flash
 ```
 
 ### Usage
+```ts
+import { pinyinEn } from 'cc-cedict-flash'
+
+const res = pinyinEn('你好', { toneType: 'num' })
+```
+
+Advanced:
 
 ```ts
-import { createCedictFlash } from 'cc-cedict-flash'
+import { createCedictFlash, builtinCedictData } from 'cc-cedict-flash'
 
-const data = {
-  pinyins: [...],
-  pinyinIndices: new Uint16Array(...),
-  defLengths: new Uint16Array(...),
-  definitions: '...',
-  trieChars: new Uint16Array(...),
-  trieValues: new Uint32Array(...),
-  trieChildIndices: new Uint32Array(...),
-  trieChildCounts: new Uint16Array(...)
-}
-
-const api = createCedictFlash(data)
+const api = createCedictFlash(builtinCedictData())
 const res = api.pinyinEn('你好')
 ```
 
@@ -35,7 +31,15 @@ const res = api.pinyinEn('你好')
 npm run build:dict
 ```
 
-This reads `cedict_ts.u8` (raw CC‑CEDICT) and generates `src/data/cedict.ts` with packed arrays used by the API.
+This downloads the latest CC‑CEDICT zip if changed, extracts the raw dict, and generates `src/data/cedict.ts` with packed arrays used by the API. Raw assets are not required at runtime; the builder restores them on demand.
+
+### TypeScript
+
+- Root exports include types and ESM entry:
+
+```ts
+import { pinyinEn, type EnglishResult, type PinyinEnOptions } from 'cc-cedict-flash'
+```
 
 ### Segmentation
 
@@ -49,3 +53,12 @@ This reads `cedict_ts.u8` (raw CC‑CEDICT) and generates `src/data/cedict.ts` w
 ### Response
 
 - Array of tokens: `{ zh: string, pinyin: string, en: string[] }`
+
+### Footprint
+
+```bash
+# From cc-cedict-flash/
+npm run footprint
+```
+
+Outputs tarball size (download), dist size, and memory metrics (RSS/heap) before/after import and sample calls.
