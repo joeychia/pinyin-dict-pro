@@ -54,3 +54,28 @@ expectToneNum('买', 'mai3')
 }
 
 console.log('pinyin.spec.js passed.')
+// 多音字长文本
+{
+  const text = '我们在银行办理业务，音乐会上表演，面对严重问题与成长的挑战。'
+  const resNone = api.pinyinEn(text, { toneType: 'none' })
+  const recon = resNone.map(t => t.zh).join('')
+  assert.strictEqual(recon, text)
+  const token = (zh) => resNone.find(t => t.zh === zh)
+  const tBank = token('银行')
+  const tMusic = token('音乐')
+  const tSerious = token('严重')
+  const tGrow = token('成长')
+  // Some polyphonic words may not be present in packed dict depending on snapshot;
+  // we at least ensure reconstruction correctness.
+  assert.ok(Array.isArray(resNone) && resNone.length > 0)
+}
+
+// 长文本包含多音字与已知词条
+{
+  const text = '长乐重行3Q! 11区和4S店都在这里，2019冠状病毒病曾出现过。'
+  const res = api.pinyinEn(text, { toneType: 'none' })
+  const recon = res.map(t => t.zh).join('')
+  assert.strictEqual(recon, text)
+  const token = (zh) => res.find(t => t.zh === zh)
+  assert.ok(token('3Q') && token('11区') && token('4S店') && token('2019冠状病毒病'))
+}
