@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import crypto from 'node:crypto'
+import child_process from 'node:child_process'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -214,6 +215,41 @@ async function run() {
     console.log('Copied raw dict to: ' + rawDictPath)
   } else {
     console.log('No update detected, using existing raw dict and packed output')
+    if (!fs.existsSync(rawDictPath)) {
+      console.log('Raw dict missing; refreshing from zip buffer')
+      fs.writeFileSync(zipPath, buf)
+      if (!fs.existsSync(unzipDir)) fs.mkdirSync(unzipDir, { recursive: true })
+      child_process.execSync(`unzip -o "${zipPath}" -d "${unzipDir}"`)
+      const entries = fs.readdirSync(unzipDir)
+      let found = ''
+      for (const name of entries) {
+        const p = path.join(unzipDir, name)
+        if (fs.statSync(p).isFile() && /cedict_ts\.u8$/i.test(name)) {
+          found = p
+          break
+        }
+      }
+      if (!found) {
+        const nested = entries.map(n => path.join(unzipDir, n)).filter(p => fs.statSync(p).isDirectory())
+        for (const d of nested) {
+          const files = fs.readdirSync(d)
+          for (const f of files) {
+            const p = path.join(d, f)
+            if (fs.statSync(p).isFile() && /cedict_ts\.u8$/i.test(f)) {
+              found = p
+              break
+            }
+          }
+          if (found) break
+        }
+      }
+      if (!found) {
+        console.error('cedict_ts.u8 not found in zip (refresh)')
+        process.exit(1)
+      }
+      fs.copyFileSync(found, rawDictPath)
+      console.log('Restored raw dict to: ' + rawDictPath)
+    }
   }
   buildPackedDict(rawDictPath, outputFile)
 }
