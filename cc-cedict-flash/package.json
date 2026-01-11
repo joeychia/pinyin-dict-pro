@@ -7,7 +7,8 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "build:dict": "node scripts/fetch-and-build.js"
+    "build:dict": "node scripts/fetch-and-build.js",
+    "test": "npm run build && node test/api.test.js"
   },
   "files": [
     "dist"

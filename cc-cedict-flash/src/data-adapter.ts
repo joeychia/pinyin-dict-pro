@@ -19,7 +19,7 @@ import {
   CEDICT_TRIE_VALUES as LOCAL_CEDICT_TRIE_VALUES,
   CEDICT_TRIE_CHILD_INDICES as LOCAL_CEDICT_TRIE_CHILD_INDICES,
   CEDICT_TRIE_CHILD_COUNTS as LOCAL_CEDICT_TRIE_CHILD_COUNTS,
-} from './data/cedict'
+} from './data/cedict.js'
 import type { CedictData } from './index'
 
 function base64ToUint16Array(base64: string): Uint16Array {
