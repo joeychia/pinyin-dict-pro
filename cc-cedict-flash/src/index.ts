@@ -10,7 +10,6 @@ export interface PinyinEnOptions {
 
 export interface CedictData {
   pinyins: string[]
-  pinyinIndices: Uint16Array
   defLengths: Uint16Array
   definitions: string
   trieChars: Uint16Array
@@ -63,6 +62,14 @@ function toneSymbolToNum(input: string): string {
   return input.split(/\s+/).map(toneSymbolToNumToken).join(' ')
 }
 
+function convertNumericOverride(numeric: string): string {
+  return numeric.split(/\s+/).map(convertNumericToken).join(' ')
+}
+
+function convertNumericToken(part: string): string {
+  return toneSymbolToNumToken(part.replace(/[1-5]$/, (m) => m))
+}
+
 function findChild(
   nodeChildIndices: Uint32Array,
   nodeChildCounts: Uint16Array,
@@ -90,19 +97,26 @@ function findChild(
 }
 
 export function createCedictFlash(data: CedictData) {
-  const pinyinIndices = data.pinyinIndices
   const defLengths = data.defLengths
   const nodeChars = data.trieChars
   const nodeValueIndices = data.trieValues
   const nodeChildIndices = data.trieChildIndices
   const nodeChildCounts = data.trieChildCounts
-  const defOffsets = new Uint32Array(pinyinIndices.length + 1)
+  const defOffsets = new Uint32Array(defLengths.length + 1)
   let cur = 0
-  for (let i = 0; i < pinyinIndices.length; i++) {
+  for (let i = 0; i < defLengths.length; i++) {
     defOffsets[i] = cur
     cur += defLengths[i]
   }
-  defOffsets[pinyinIndices.length] = cur
+  defOffsets[defLengths.length] = cur
+
+  // No overrides: longest-match segmentation with per-entry pinyins ensures correct mapping
+
+  function applyToneOptions(pinyinStr: string, toneType?: PinyinEnOptions['toneType']): string {
+    if (toneType === 'none') return removeToneMarks(pinyinStr)
+    if (toneType === 'num') return toneSymbolToNum(pinyinStr)
+    return pinyinStr
+  }
 
   function pinyinEn(text: string, options?: PinyinEnOptions): EnglishResult[] {
     if (!text) return []
@@ -126,17 +140,13 @@ export function createCedictFlash(data: CedictData) {
         }
       }
       if (longestMatchLen > 0) {
-        const zh = text.substr(i, longestMatchLen)
-        const start = defOffsets[longestMatchValueIdx]
-        const end = defOffsets[longestMatchValueIdx + 1]
-        const defStr = data.definitions.substring(start, end)
-        const en = defStr.split('\u0001')
-        let pinyinStr = data.pinyins[pinyinIndices[longestMatchValueIdx]]
-        if (options?.toneType === 'none') {
-          pinyinStr = removeToneMarks(pinyinStr)
-        } else if (options?.toneType === 'num') {
-          pinyinStr = toneSymbolToNum(pinyinStr)
-        }
+          const zh = text.substr(i, longestMatchLen)
+          const start = defOffsets[longestMatchValueIdx]
+          const end = defOffsets[longestMatchValueIdx + 1]
+          const defStr = data.definitions.substring(start, end)
+          const en = defStr.split('\u0001')
+        let pinyinStr = data.pinyins[longestMatchValueIdx]
+        pinyinStr = applyToneOptions(pinyinStr, options?.toneType)
         results.push({ zh, pinyin: pinyinStr, en })
         i += longestMatchLen
       } else {
@@ -151,4 +161,4 @@ export function createCedictFlash(data: CedictData) {
   return { pinyinEn }
 }
 
-export { builtinCedictData } from './data-adapter'
+export { builtinCedictData } from './data-adapter.js'

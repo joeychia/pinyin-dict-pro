@@ -80,15 +80,7 @@ function buildPackedDict(rawPath, outPath) {
     values.push(entry.d)
   }
 
-  const uniquePinyins = Array.from(new Set(pinyins))
-  const pinyinMap = new Map()
-  uniquePinyins.forEach((p, i) => pinyinMap.set(p, i))
-  console.log('Unique pinyin variants: ' + uniquePinyins.length)
-
-  const pinyinIndices = new Uint16Array(keys.length)
-  for (let i = 0; i < keys.length; i++) {
-    pinyinIndices[i] = pinyinMap.get(pinyins[i])
-  }
+  // Per-entry pinyins retained to preserve alignment
 
   let definitionsStr = ''
   const defLengths = new Uint16Array(keys.length)
@@ -151,7 +143,6 @@ function buildPackedDict(rawPath, outPath) {
   }
   console.log('Packed trie nodes: ' + totalNodes)
 
-  const pinyinBase64 = Buffer.from(pinyinIndices.buffer).toString('base64')
   const defLengthsBase64 = Buffer.from(defLengths.buffer).toString('base64')
   const nodeCharsBase64 = Buffer.from(nodeChars.buffer).toString('base64')
   const nodeValueIndicesBase64 = Buffer.from(nodeValueIndices.buffer).toString('base64')
@@ -159,8 +150,7 @@ function buildPackedDict(rawPath, outPath) {
   const nodeChildCountsBase64 = Buffer.from(nodeChildCounts.buffer).toString('base64')
 
   const outputContent =
-    'export const CEDICT_PINYINS = ' + JSON.stringify(uniquePinyins) + ';\n' +
-    'export const CEDICT_PINYIN_INDICES = "' + pinyinBase64 + '";\n' +
+    'export const CEDICT_PINYINS = ' + JSON.stringify(pinyins) + ';\n' +
     'export const CEDICT_DEF_LENGTHS = "' + defLengthsBase64 + '";\n' +
     'export const CEDICT_DEFINITIONS = ' + JSON.stringify(definitionsStr) + ';\n' +
     '\n' +

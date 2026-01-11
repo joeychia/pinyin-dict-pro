@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import { createCedictFlash } from '../dist/index.js'
+import { createCedictFlash } from '../dist/cc-cedict-flash/src/index.js'
 import { builtinCedictData } from '../dist/cc-cedict-flash/src/data-adapter.js'
 
 function stringifyTokens(tokens) {

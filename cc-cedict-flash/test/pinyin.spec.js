@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import { createCedictFlash } from '../dist/index.js'
+import { createCedictFlash } from '../dist/cc-cedict-flash/src/index.js'
 import { builtinCedictData } from '../dist/cc-cedict-flash/src/data-adapter.js'
 
 const api = createCedictFlash(builtinCedictData())
@@ -61,13 +61,14 @@ console.log('pinyin.spec.js passed.')
   const recon = resNone.map(t => t.zh).join('')
   assert.strictEqual(recon, text)
   const token = (zh) => resNone.find(t => t.zh === zh)
-  const tBank = token('银行')
-  const tMusic = token('音乐')
-  const tSerious = token('严重')
+  const tConcert = token('音乐会')
+  const tSerious = token('严重问题')
   const tGrow = token('成长')
-  // Some polyphonic words may not be present in packed dict depending on snapshot;
-  // we at least ensure reconstruction correctness.
-  assert.ok(Array.isArray(resNone) && resNone.length > 0)
+  assert.ok(tConcert && tSerious && tGrow, 'Expected tokens present')
+  // Assert pinyin exactly as returned by API for current dict snapshot
+  assert.strictEqual(tConcert.pinyin.toLowerCase(), 'yin yue hui')
+  assert.strictEqual(tSerious.pinyin.toLowerCase(), 'yan zhong wen ti')
+  assert.strictEqual(tGrow.pinyin.toLowerCase(), 'cheng zhang')
 }
 
 // 长文本包含多音字与已知词条

@@ -12,7 +12,6 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import {
   CEDICT_PINYINS as LOCAL_CEDICT_PINYINS,
-  CEDICT_PINYIN_INDICES as LOCAL_CEDICT_PINYIN_INDICES,
   CEDICT_DEF_LENGTHS as LOCAL_CEDICT_DEF_LENGTHS,
   CEDICT_DEFINITIONS as LOCAL_CEDICT_DEFINITIONS,
   CEDICT_TRIE_CHARS as LOCAL_CEDICT_TRIE_CHARS,
@@ -45,7 +44,6 @@ function base64ToUint32Array(base64: string): Uint32Array {
 }
 
 export function builtinCedictData(): CedictData {
-  const pinyinIndices = base64ToUint16Array(LOCAL_CEDICT_PINYIN_INDICES)
   const defLengths = base64ToUint16Array(LOCAL_CEDICT_DEF_LENGTHS)
   const trieChars = base64ToUint16Array(LOCAL_CEDICT_TRIE_CHARS)
   const trieValues = base64ToUint32Array(LOCAL_CEDICT_TRIE_VALUES)
@@ -53,7 +51,6 @@ export function builtinCedictData(): CedictData {
   const trieChildCounts = base64ToUint16Array(LOCAL_CEDICT_TRIE_CHILD_COUNTS)
   return {
     pinyins: LOCAL_CEDICT_PINYINS,
-    pinyinIndices,
     defLengths,
     definitions: LOCAL_CEDICT_DEFINITIONS,
     trieChars,
